@@ -27,17 +27,6 @@ print(msg)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-server_address = ('localhost', 10000)
-count = 1
-
-message = 'message variable'
-
-sock.bind(server_address)
-
-if count == 1:
-    server_address = ('198.105.254.63', 10000)
-    sock.bind(server_address)
-    count += 1
 try:
     while True:
         user_input = None
@@ -59,7 +48,7 @@ try:
             # data is pending on the socket
             # reading form the socket will NOT block
             data, server = sock.recvfrom(4096)
-            print('received "%s"' % msg)
+            print('received "%s"' % data)
 
 finally:
     print('closing socket')
