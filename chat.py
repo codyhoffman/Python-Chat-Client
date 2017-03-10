@@ -22,6 +22,19 @@ print('me:   ', myHost, myPort, 'you:  ', yourHost, yourPort)
 seqnum = 1
 # parsing complete time work with socket
 
+#did = 'me' uid = (myHost, myPort) name = 'cody'
+def encode_registration(name, uid, did, version=150):
+    header_buf = bytearray(36)
+    name = name + ' ' * (16-len(name))
+    UID = UID + ' ' * (16-len(UID))
+    DID = DID + ' ' * (16-len(UID))
+
+    header_buf = struct.pack('!HH16s16s', version, name.encode('utf-8'), UID.encode('utf-8'), DID.encode('utf-8'))
+    return header_buf
+
+
+
+
 def encode_chat_msg(seqnum, UID, DID, msg, version=150):
     seqnum += 1
     header_buf = bytearray(36)
