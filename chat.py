@@ -9,18 +9,21 @@ args = parser.parse_args()
 print('Chat started:', args.name, args.myIPhost, args.yourIPhost)
 
 myName = args.name
+yourName = 'other user' # update this when directory service is implemented, as we have no idea what name is without directory
 
 myHostPort = args.myIPhost.split(':')
 myHost = myHostPort[0]
 myPort = int(myHostPort[1])
 
 yourHostPort = args.yourIPhost.split(':')
-yourHost = myHostPort[0]
-yourPort = int(myHostPort[1])
-
+yourHost = yourHostPort[0]
+yourPort = int(yourHostPort[1])
+print('me:   ', myHost, myPort, 'you:  ', yourHost, yourPort)
+seqnum = 1
 # parsing complete time work with socket
 
 def encode_chat_msg(seqnum, UID, DID, msg, version=150):
+    seqnum += 1
     header_buf = bytearray(36)
     UID = UID + ' ' * (16 - len(UID))
     DID = DID + ' ' * (16 - len(DID))
@@ -41,13 +44,13 @@ def decode_chat_msg(msg_buf):
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+sock.bind((myHost, myPort))
 try:
     while True:
         user_input = None
-        print('>> ', end='', flush=True)
+        print(myName, '>> ', end='', flush=True)
         rlist, wlist, elist = select.select([sock, sys.stdin], [], [])
-        print('Select completed', rlist, wlist, elist)
+        #print('Select completed', rlist, wlist, elist)
 
 
         if sys.stdin in rlist:
@@ -55,16 +58,19 @@ try:
             # it will NOT BLOCK
             user_input = input()
 
-            print('sending "%s"' % user_input)
-            user_input_bytes = user_input.encode('utf-8')
+            #print('sending "%s"' % user_input)
+            #user_input_bytes = user_input.encode('utf-8')
+            user_input_bytes = encode_chat_msg(seqnum, 'ME', 'YOU', user_input)
             sent = sock.sendto(user_input_bytes, (yourHost, yourPort))
-            print('sent')
+            #print('sent')
 
         if sock in rlist:
             # data is pending on the socket
             # reading form the socket will NOT block
             data, server = sock.recvfrom(4096)
-            print('received "%s"' % data)
+            msg = decode_chat_msg(data)
+            print('')
+            print(yourName, '>> ', msg[3])
 
 finally:
     print('closing socket')
