@@ -23,7 +23,7 @@ seqnum = 1
 # parsing complete time work with socket
 
 #did = 'me' uid = (myHost, myPort) name = 'cody'
-def encode_registration(name, uid, did, version=150):
+def encode_registration(myName, UID, DID, version=150):
     header_buf = bytearray(36)
     name = name + ' ' * (16-len(name))
     UID = UID + ' ' * (16-len(UID))
@@ -31,8 +31,6 @@ def encode_registration(name, uid, did, version=150):
 
     header_buf = struct.pack('!HH16s16s', version, name.encode('utf-8'), UID.encode('utf-8'), DID.encode('utf-8'))
     return header_buf
-
-
 
 
 def encode_chat_msg(seqnum, UID, DID, msg, version=150):
@@ -55,9 +53,10 @@ def decode_chat_msg(msg_buf):
     msg = msg_buf[36:].decode('utf-8')
     return (seqnum, UID, DID, msg)
 
-
+# Open UDP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((myHost, myPort))
+
 try:
     while True:
         user_input = None

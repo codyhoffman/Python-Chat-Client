@@ -1,23 +1,56 @@
 import sys, os, socket, struct, select, argparse
 
 
-name = 'test'
-IpHost = '127.0.0.1:7000'
+dirHost = '127.0.0.1'
+dirPort = 7000
+library = {}
+
+dirserv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+dirserv.bind((dirHost, dirPort))
+
+dirserv.listen()
 
 
-def encode_chat_msg(seqnum, UID, DID, msg, version=150):
-    seqnum += 1
+def decode_registration(msg_buf):
+    tuple = struct.unpack('!HH16s16s', msg_buf[:36])
+    (version, myName, UID, DID) = tuple
+    myName = myName.decode('utf-8')
+    UID = UID.decode('utf-8')
+    DID = DID.decode('utf-8')
+    return myName, UID, DID
+
+def encode_response(errorCode, DID, version=150):
     header_buf = bytearray(36)
-    UID = UID + ' ' * (16 - len(UID))
-    DID = DID + ' ' * (16 - len(DID))
+    errorCode = errorCode + ' ' * (16-len(errorCode))
+    DID = DID + ' ' * (16-len(DID))
 
-    header_buf = struct.pack('!HH16s16s', version, seqnum, UID.encode('utf-8'), DID.encode('utf-8'))
-    header_buf = header_buf + msg.encode('utf-8')
-
+    header_buf = struct.pack('!HH16s16s', version, errorCode.encode('utf-8'), DID.encode('utf-8'))
     return header_buf
 
-library = {"cody": '127.0.0.1:5000', 'sam': '127.0.0.1:6000'}
+def findUser(yourName):
+    if library.has_key(yourName):
+        errorCode = '400'
+        return library[yourName], errorCode
+    else:
+        errorCode = '600'
+        return None, errorCode
+try:
 
-library.update({name: IpHost})
+    while True:
+        clientsocket, addr = dirserv.accept()
+        print("Got a connection from %s" % str(addr))
 
-print(library)
+        data = clientsocket.recv(4096)
+
+        myName, UID, DID = decode_registration(data)
+
+        library.update({myName: UID})
+
+        yourIPHost, err = findUser(DID)
+
+        clientsocket.send(encode_response(err, yourIPHost))
+finally:
+    print('TCP connection closed')
+    clientsocket.close()
+
+
